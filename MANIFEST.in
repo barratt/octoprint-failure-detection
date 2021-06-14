@@ -1,0 +1,4 @@
+include README.md
+recursive-include octoprint_failure_detection/templates *
+recursive-include octoprint_failure_detection/translations *
+recursive-include octoprint_failure_detection/static *
