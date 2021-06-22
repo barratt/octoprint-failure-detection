@@ -16,11 +16,15 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
     octoprint.plugin.TemplatePlugin
 ):
 
+    def on_after_startup(self):
+        self._logger.info("Hello World! (more: %s)" % self._settings.get(["licenseKey"]))
+
     ##~~ SettingsPlugin mixin
 
     def get_settings_defaults(self):
         return {
             # put your plugin's default settings here
+            licenseKey = "My License"
         }
 
     ##~~ AssetPlugin mixin
@@ -55,6 +59,17 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
                 "pip": "https://github.com/you/OctoPrint-Failure_detection/archive/{target_version}.zip",
             }
         }
+
+    def detect_failure(self):
+        try:
+            snapshot_url = self._settings.global_get(["webcam", "snapshot"])
+            filename = str('/tmp/' + ''.join([random.choice(string.ascii_letters + string.digits) for n in xrange(32)])) + '.jpg'
+            urlrequest(snapshot_url, filename=filename)
+            self._logger.info('Sending to sever...')
+            self.upload_file(filename, filename, pic=True)
+            os.remove(filename)
+        except Exception as e:
+            self._logger.warn("Could not detect: %s" % e)
 
 
 # If you want your plugin to be registered within OctoPrint under a different name than what you defined in setup.py
