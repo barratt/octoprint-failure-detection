@@ -48,7 +48,7 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
 
         self._logger.info("Hello")
         self._logger.info("Hello World! (more: %s)" % self._settings.get(["licenseKey"]))
-        self.timer = RepeatedTimer(10.0, self.loop, run_first=True)
+        self.timer = RepeatedTimer(60.0, self.loop, run_first=True)
         self.timer.start()
 
     ##~~ SettingsPlugin mixin
