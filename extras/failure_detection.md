@@ -11,9 +11,9 @@ license: AGPLv3
 # TODO
 date: today's date in format YYYY-MM-DD, e.g. 2015-04-21
 
-homepage: https://github.com/you/OctoPrint-Failure_detection
-source: https://github.com/you/OctoPrint-Failure_detection
-archive: https://github.com/you/OctoPrint-Failure_detection/archive/master.zip
+homepage: https://github.com/barratt/octoprint-failure-detection
+source: https://github.com/barratt/octoprint-failure-detection
+archive: https://github.com/barratt/octoprint-failure-detection/archive/master.zip
 
 # TODO
 # Set this to true if your plugin uses the dependency_links setup parameter to include

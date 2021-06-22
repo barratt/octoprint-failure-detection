@@ -7,10 +7,10 @@
 $(function() {
     function Failure_detectionViewModel(parameters) {
         var self = this;
-
+        self.settings = parameters[0];
+        console.log("Hello shaun");
         // assign the injected parameters, e.g.:
         // self.loginStateViewModel = parameters[0];
-        // self.settingsViewModel = parameters[1];
 
         // TODO: Implement your plugin's view model here.
     }
@@ -22,8 +22,12 @@ $(function() {
     OCTOPRINT_VIEWMODELS.push({
         construct: Failure_detectionViewModel,
         // ViewModels your plugin depends on, e.g. loginStateViewModel, settingsViewModel, ...
-        dependencies: [ /* "loginStateViewModel", "settingsViewModel" */ ],
-        // Elements to bind to, e.g. #settings_plugin_failure_detection, #tab_plugin_failure_detection, ...
-        elements: [ /* ... */ ]
+        dependencies: [ 
+            "settingsViewModel", 
+            /* "loginStateViewModel" */
+        ],
+        elements: [ 
+            '#failure_detection_settings',
+        ]
     });
 });
