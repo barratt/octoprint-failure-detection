@@ -57,9 +57,9 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
         return dict(
             # put your plugin's default settings here
             licenseKey = None,
-            host = "http://3ffa20353787.ngrok.io",
-            # host = "https://func-octoprint-failure-detection.azurewebsites.net",
-            debug = True,
+            # host = "http://3ffa20353787.ngrok.io",
+            host = "https://func-octoprint-failure-detection.azurewebsites.net",
+            debug = False,
             notificationSettings = dict(
                 email   = None,
                 sms     = None,
