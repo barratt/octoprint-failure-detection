@@ -33,7 +33,7 @@ plugin_url = "https://github.com/you/OctoPrint-Failure_detection"
 plugin_license = "AGPLv3"
 
 # Any additional requirements besides OctoPrint should be listed here
-plugin_requires = []
+plugin_requires = [ 'requests_toolbelt' ]
 
 ### --------------------------------------------------------------------------------------------------------------------
 ### More advanced options that you usually shouldn't have to touch follow after this point
@@ -46,7 +46,9 @@ plugin_requires = []
 plugin_additional_data = []
 
 # Any additional python packages you need to install with your plugin that are not contained in <plugin_package>.*
-plugin_additional_packages = []
+plugin_additional_packages = [
+    # 'requests_toolbelt'
+]
 
 # Any python packages within <plugin_package>.* you do NOT want to install with your plugin
 plugin_ignored_packages = []

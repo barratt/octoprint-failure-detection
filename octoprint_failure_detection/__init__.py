@@ -1,31 +1,57 @@
 # coding=utf-8
 from __future__ import absolute_import
 
-### (Don't forget to remove me)
-# This is a basic skeleton for your plugin's __init__.py. You probably want to adjust the class name of your plugin
-# as well as the plugin mixins it's subclassing from. This is really just a basic skeleton to get you started,
-# defining your plugin as a template plugin, settings and asset plugin. Feel free to add or remove mixins
-# as necessary.
-#
-# Take a look at the documentation on what other plugin mixins are available.
-
 import octoprint.plugin
+import urllib
+import random
+import string
+import sys
+import os
+from requests import Request, Session
+from requests_toolbelt.multipart.encoder import MultipartEncoder
+
+from octoprint.util import RepeatedTimer
+
+
+if sys.version_info.major > 2:
+    import urllib.request
+    urlrequest = urllib.request.urlretrieve
+    xrange = range
+else:
+    urlrequest = urllib.urlretrieve
 
 class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
     octoprint.plugin.AssetPlugin,
-    octoprint.plugin.TemplatePlugin
+    octoprint.plugin.TemplatePlugin,
+    octoprint.plugin.EventHandlerPlugin,
+    octoprint.plugin.StartupPlugin
 ):
 
+    def loop(self):
+        self._logger.info("Timer fired")
+        if not self._printer.is_printing():
+            self._logger.info("Not printing")
+            return 
+
+
+        # TODO: Check is printing
+        # Upload the screenshot 
+        self.detect_failure()
+
     def on_after_startup(self):
+        self._logger.info("Hello")
         self._logger.info("Hello World! (more: %s)" % self._settings.get(["licenseKey"]))
+        self.timer = RepeatedTimer(10.0, self.loop, run_first=True)
+        self.timer.start()
 
     ##~~ SettingsPlugin mixin
 
     def get_settings_defaults(self):
-        return {
+        return dict(
             # put your plugin's default settings here
-            licenseKey = "My License"
-        }
+            licenseKey = "None",
+            host = "https://823c0699251f.ngrok.io"
+        )
 
     ##~~ AssetPlugin mixin
 
@@ -60,14 +86,37 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
             }
         }
 
+    def on_event(self, event, payload):
+        self._logger.info("Hello")
+
+
     def detect_failure(self):
         try:
             snapshot_url = self._settings.global_get(["webcam", "snapshot"])
-            filename = str('/tmp/' + ''.join([random.choice(string.ascii_letters + string.digits) for n in xrange(32)])) + '.jpg'
-            urlrequest(snapshot_url, filename=filename)
+            filename = ''.join([random.choice(string.ascii_letters + string.digits) for n in xrange(32)]) + '.jpg'
+            filepath = '/tmp/' + filename
+
+            urlrequest(snapshot_url, filename=filepath)
+
             self._logger.info('Sending to sever...')
-            self.upload_file(filename, filename, pic=True)
-            os.remove(filename)
+            endpoint = self._settings.get(["host"]) + "/api/capture"
+            licenseKey = self._settings.get(["licenseKey"])
+
+            # Send up printer specs, file name etc
+            # TODO: Send up the notification method too!
+            mp_encoder = MultipartEncoder(
+                fields={
+                    'img': ('a.jpg', open(filepath, 'rb'), 'image/jpeg')
+                }
+            )
+            req = Request('POST', endpoint, data=mp_encoder, headers = {'authorization': licenseKey, 'content-type': mp_encoder.content_type}).prepare()
+
+            s = Session()
+            response = s.send(req)
+            self._logger.info('Sent! Got status %s and response: %s', response.status_code, response.text)
+            
+
+            # os.remove(filename)
         except Exception as e:
             self._logger.warn("Could not detect: %s" % e)
 
@@ -82,7 +131,7 @@ __plugin_name__ = "Failure_detection Plugin"
 # compatibility flags according to what Python versions your plugin supports!
 #__plugin_pythoncompat__ = ">=2.7,<3" # only python 2
 #__plugin_pythoncompat__ = ">=3,<4" # only python 3
-#__plugin_pythoncompat__ = ">=2.7,<4" # python 2 and 3
+__plugin_pythoncompat__ = ">=2.7,<4" # python 2 and 3
 
 def __plugin_load__():
     global __plugin_implementation__
