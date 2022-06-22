@@ -24,13 +24,13 @@ plugin_description = """TODO"""
 plugin_author = "Barratt"
 
 # The plugin's author's mail address.
-plugin_author_email = "lecoffeestain@gmail.com"
+plugin_author_email = "hello@presspla.uk"
 
 # The plugin's homepage URL. Can be overwritten within OctoPrint's internal data via __plugin_url__ in the plugin module
-plugin_url = "https://github.com/barratt/octoprint-failure-detection"
+plugin_url = "https://github.com/barratt/octoprint-simple-failure-detection"
 
 # The plugin's license. Can be overwritten within OctoPrint's internal data via __plugin_license__ in the plugin module
-plugin_license = "AGPLv3"
+plugin_license = "MIT"
 
 # Any additional requirements besides OctoPrint should be listed here
 plugin_requires = [ 'pillow' ]

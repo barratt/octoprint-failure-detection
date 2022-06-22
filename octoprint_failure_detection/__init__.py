@@ -23,9 +23,15 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
             self._logger.info("Not printing")
             return 
 
+        if not self._settings.get(["enabled"]): 
+            self._logger.info("Not opted-in")
+
         self._logger.info("We are printing, attempting to check for failure")
         # Upload the screenshot 
         self.detect_failure()
+
+    def get_check_interval(self):
+        return int(self._settings.get(["enabled"]))
 
     def on_after_startup(self):
         self.printFileName = ""
@@ -33,9 +39,7 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
         self.availableCredits = 0
 
         self._logger.info("Hello World! (License Key: {})".format(self._settings.get(["licenseKey"])))
-        self.timer = RepeatedTimer(10.0, self.loop, run_first=True)
-        # We can start it when a print starts.
-        self.timer.start()
+        self.timer = RepeatedTimer(self.get_check_interval, self.loop, run_first=True)
 
     ##~~ SettingsPlugin mixin
     def get_settings_defaults(self):
@@ -43,12 +47,13 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
             # put your plugin's default settings here
             licenseKey = None,
             # host = "http://3ffa20353787.ngrok.io",
-            # host = "https://func-octoprint-failure-detection.azurewebsites.net",
-            host = "http://host.docker.internal:7071/api",
+            host = "https://func-octoprint-failure-detection.azurewebsites.net/api", # TODO: Move this to a custom domain... At some point...
+            # host = "http://host.docker.internal:7071/api",
+            # host = "http:/api.presspla.uk",
             debug = False,
             enabled = False,
+            interval = 10.0,
             training = False,
-            # training = False,
 
             notificationSettings = dict(
                 email   = None,
@@ -62,8 +67,7 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
         # core UI here.
         return {
             "js": ["js/failure_detection.js"],
-            "css": ["css/failure_detection.css"],
-            "less": ["less/failure_detection.less"]
+            "css": ["css/failure_detection.css"]
         }
 
     ##~~ Softwareupdate hook
@@ -99,12 +103,7 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
             self._logger.info("HELLO CANCELLED!")
             # Detect failure and stop the timer?
 
-
         #  PrintCancelled could be _really_ good for us.
-
-        # self._logger.info(payload.name)
-
-
     def detect_failure(self):
         try:
             snapshot_url = self._settings.global_get(["webcam", "snapshot"])
@@ -160,6 +159,8 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
 
     def on_settings_save(self, data):
         self._logger.info('Saving')
+        # Validate settings
+
         octoprint.plugin.SettingsPlugin.on_settings_save(self, data)
     
     def get_template_configs(self):
