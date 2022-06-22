@@ -3,23 +3,11 @@ from __future__ import absolute_import
 
 import octoprint.plugin
 
-import urllib
-import random
-import string
-import sys
-import os
-import json
+import io
 import uuid
 import requests
 from octoprint.util import RepeatedTimer
 from PIL import Image
-
-if sys.version_info.major > 2:
-    import urllib.request
-    urlrequest = urllib.request.urlretrieve
-    xrange = range
-else:
-    urlrequest = urllib.urlretrieve
 
 class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
     octoprint.plugin.AssetPlugin,
@@ -99,12 +87,12 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
 
         # PrinterStateChanged
         if event == "PrintStarted":
-            print("PRINT STARTED")
+            self._logger.info("PRINT STARTED")
             self.printId = str(uuid.uuid4())
             self.timer.start()
 
         if event == "PrintCancelled": 
-            print("HELLO CANCELLED!")
+            self._logger.info("HELLO CANCELLED!")
             # Detect failure and stop the timer?
 
 
@@ -119,7 +107,9 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
             filename = 'sfdprint.jpg'
             filepath = '/tmp/' + filename
 
-            urlrequest(snapshot_url, filename=filepath)
+            snapshotReeponse = requests.get(snapshot_url)
+            # Snapshot response can be none
+            img = io.BytesIO(snapshotReeponse.content)
 
             endpoint = self._settings.get(["host"]) + "/capture"
             licenseKey = self._settings.get(["licenseKey"]) or ""
@@ -127,18 +117,18 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
             self._logger.info('Sending last capture to {} with key {}...'.format(endpoint, licenseKey))
 
             if not trainingMode:
-                print("Resizing before we send to reduce bandwidth")
+                self._logger.info("Resizing before we send to reduce bandwidth")
                 new_width  = 600
                 new_height = 600
                 img = Image.open(filepath)
                 img = img.resize((new_height, new_width))
-                print('saving as {}'.format(filepath))
+                self._logger.info('saving as {}'.format(filepath))
                 img.save(filepath)
                 
-            print('reading image')
+            self._logger.info('reading image')
             img = open(filepath, 'rb').read()
 
-            print('sending image')
+            self._logger.info('sending image')
             # We need some kind of way of detecting this printer is unique for their license key, for now we will just rate limit
             response = requests.post(endpoint, data=img, headers = {
                 'Authorization': licenseKey, 
@@ -148,7 +138,7 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
             self._logger.info('Sent! Got status %s and response: %s with headers: %s', response.status_code, response.text, response.headers)
 
             if licenseKey is None:
-                print("Our license key was not set before, lets set it")
+                self._logger.info("Our license key was not set before, lets set it")
                 self._settings.set(["licenseKey"], response.headers.get("Authorization", licenseKey))
                 self._settings.save()
 
@@ -159,20 +149,26 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
     
     def get_settings_restricted_paths(self):
             return dict(
-                admin=[['licenseKey'], ]
+                admin=[
+                    ['licenseKey'],
+                ]
             )
 
     def on_settings_save(self, data):
+        self._logger.info('Saving')
         octoprint.plugin.SettingsPlugin.on_settings_save(self, data)
     
     def get_template_configs(self):
         return [
-            # dict(type="settings", custom_bindings=False)
-            dict(type='settings', custom_bindings=True, template='simple_failure_detection_settings.jinja2')
-        ]
+			dict(type = "settings", custom_bindings = False)
+		]
 
     def get_template_vars(self):
-        return dict(licenseKey = self._settings.get(["licenseKey"]))
+        return dict(
+            licenseKey = self._settings.get(["licenseKey"]),
+            host = self._settings.get(["host"]),
+            enabled = self._settings.get(["enabled"]),
+        )
 # If you want your plugin to be registered within OctoPrint under a different name than what you defined in setup.py
 # ("OctoPrint-PluginSkeleton"), you may define that here. Same goes for the other metadata derived from setup.py that
 # can be overwritten via __plugin_xyz__ control properties. See the documentation for that.
