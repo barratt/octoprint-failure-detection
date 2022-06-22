@@ -10,10 +10,9 @@ import sys
 import os
 import json
 import uuid
-from requests import Request, Session
-from requests_toolbelt.multipart.encoder import MultipartEncoder
-
+import requests
 from octoprint.util import RepeatedTimer
+from PIL import Image
 
 if sys.version_info.major > 2:
     import urllib.request
@@ -29,7 +28,6 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
     octoprint.plugin.StartupPlugin
 ):
 
-
     def loop(self):
         self._logger.info("Timer fired")
         # Not printing & not debugging
@@ -37,7 +35,7 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
             self._logger.info("Not printing")
             return 
 
-        # TODO: Check is printing
+        self._logger.info("We are printing, attempting to check for failure")
         # Upload the screenshot 
         self.detect_failure()
 
@@ -46,19 +44,19 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
         self.printId = ""
         self.availableCredits = 0
 
-        self._logger.info("Hello")
-        self._logger.info("Hello World! (more: %s)" % self._settings.get(["licenseKey"]))
-        self.timer = RepeatedTimer(60.0, self.loop, run_first=True)
+        self._logger.info("Hello World! (License Key: {})".format(self._settings.get(["licenseKey"])))
+        self.timer = RepeatedTimer(10.0, self.loop, run_first=True)
+        # We can start it when a print starts.
         self.timer.start()
 
     ##~~ SettingsPlugin mixin
-
     def get_settings_defaults(self):
         return dict(
             # put your plugin's default settings here
             licenseKey = None,
             # host = "http://3ffa20353787.ngrok.io",
-            host = "https://func-octoprint-failure-detection.azurewebsites.net",
+            # host = "https://func-octoprint-failure-detection.azurewebsites.net",
+            host = "http://host.docker.internal:7071/api",
             debug = False,
             notificationSettings = dict(
                 email   = None,
@@ -67,7 +65,6 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
         )
 
     ##~~ AssetPlugin mixin
-
     def get_assets(self):
         # Define your plugin's asset files to automatically include in the
         # core UI here.
@@ -78,11 +75,7 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
         }
 
     ##~~ Softwareupdate hook
-
     def get_update_information(self):
-        # Define the configuration for your plugin to use with the Software Update
-        # Plugin here. See https://docs.octoprint.org/en/master/bundledplugins/softwareupdate.html
-        # for details.
         return {
             "failure_detection": {
                 "displayName": "Simple Failure Detection",
@@ -101,48 +94,63 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
 
     def on_event(self, event, payload):
         self._logger.info("Hello")
+        self._logger.info(event)
         self._logger.info(payload)
 
+        # PrinterStateChanged
         if event == "PrintStarted":
+            print("PRINT STARTED")
             self.printId = str(uuid.uuid4())
+            self.timer.start()
+
+        if event == "PrintCancelled": 
+            print("HELLO CANCELLED!")
+            # Detect failure and stop the timer?
+
+
+        #  PrintCancelled could be _really_ good for us.
+
         # self._logger.info(payload.name)
 
 
     def detect_failure(self):
         try:
             snapshot_url = self._settings.global_get(["webcam", "snapshot"])
-            filename = ''.join([random.choice(string.ascii_letters + string.digits) for n in xrange(32)]) + '.jpg'
+            filename = 'sfdprint.jpg'
             filepath = '/tmp/' + filename
 
             urlrequest(snapshot_url, filename=filepath)
 
-            self._logger.info('Sending to sever...')
-            endpoint = self._settings.get(["host"]) + "/api/capture"
+            endpoint = self._settings.get(["host"]) + "/capture"
             licenseKey = self._settings.get(["licenseKey"]) or ""
+            trainingMode = self._settings.get(["training"]) or False # Allows full size image uploading
+            self._logger.info('Sending last capture to {} with key {}...'.format(endpoint, licenseKey))
 
-            # Send up printer specs, file name etc
-            # TODO: Send up the notification method too!
-            mp_encoder = MultipartEncoder(
-                fields={
-                    'img': ('a.jpg', open(filepath, 'rb'), 'image/jpeg'),
-                    'data': ('data.json', json.dumps({
-                        'printerName': self._settings.get(["printer_name"]) or None,
-                        'job': self._printer.get_current_job() or None,
-                        'printId': self.printId or None,
-                        'notificationSettings': self._settings.get(["notification_settings"])
-                    }), 'application/json'),
-                }
-            )
-            # PrinterInterface.get_state_id(self)
-            req = Request('POST', endpoint, data=mp_encoder, headers = {
+            if not trainingMode:
+                print("Resizing before we send to reduce bandwidth")
+                new_width  = 600
+                new_height = 600
+                img = Image.open(filepath)
+                img = img.resize((new_height, new_width))
+                print('saving as {}'.format(filepath))
+                img.save(filepath)
+                
+            print('reading image')
+            img = open(filepath, 'rb').read()
+
+            print('sending image')
+            # We need some kind of way of detecting this printer is unique for their license key, for now we will just rate limit
+            response = requests.post(endpoint, data=img, headers = {
                 'Authorization': licenseKey, 
-                'Content-Type': mp_encoder.content_type,
-            }).prepare()
+                'Content-Type': 'application/octet-stream'
+            })
 
-            s = Session()
-            response = s.send(req)
             self._logger.info('Sent! Got status %s and response: %s with headers: %s', response.status_code, response.text, response.headers)
-            self._settings.set(["licenseKey"], response.headers.get("Authorization", licenseKey))
+
+            if licenseKey is None:
+                print("Our license key was not set before, lets set it")
+                self._settings.set(["licenseKey"], response.headers.get("Authorization", licenseKey))
+                self._settings.save()
 
             self._logger.info("Done")
             # os.remove(filename)

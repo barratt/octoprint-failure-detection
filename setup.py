@@ -33,7 +33,7 @@ plugin_url = "https://github.com/barratt/octoprint-failure-detection"
 plugin_license = "AGPLv3"
 
 # Any additional requirements besides OctoPrint should be listed here
-plugin_requires = [ 'requests_toolbelt' ]
+plugin_requires = [ 'pillow' ]
 
 ### --------------------------------------------------------------------------------------------------------------------
 ### More advanced options that you usually shouldn't have to touch follow after this point
