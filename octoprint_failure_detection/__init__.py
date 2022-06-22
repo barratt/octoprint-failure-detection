@@ -105,6 +105,13 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
         if event == "PrintCancelled": 
             self._logger.info("HELLO CANCELLED!")
             # Detect failure and stop the timer?
+            if not self._settings.get(["enabled"]): 
+                self._logger.info("Not opted-in")
+                return 
+
+            self._logger.info("Print cancelled, this is usually due to failure so lets grab a screenshot")
+            # Upload the screenshot 
+            self.detect_failure()
 
         #  PrintCancelled could be _really_ good for us.
     def detect_failure(self):
@@ -142,6 +149,8 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
             })
 
             self._logger.info('Sent! Got status %s and response: %s with headers: %s', response.status_code, response.text, response.headers)
+
+            # This can be triggered on cancell or on timer if we see a failure we might want to stop the print though if its running
 
             if licenseKey is None:
                 self._logger.info("Our license key was not set before, lets set it")
