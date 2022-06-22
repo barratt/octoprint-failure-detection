@@ -55,6 +55,8 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
             enabled = False,
             interval = 10.0,
             training = False,
+            email = None,
+            stopOnFailure = False,
 
             notificationSettings = dict(
                 email   = None,
