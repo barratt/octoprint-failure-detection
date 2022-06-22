@@ -46,6 +46,10 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
             # host = "https://func-octoprint-failure-detection.azurewebsites.net",
             host = "http://host.docker.internal:7071/api",
             debug = False,
+            enabled = False,
+            training = False,
+            # training = False,
+
             notificationSettings = dict(
                 email   = None,
                 sms     = None,
