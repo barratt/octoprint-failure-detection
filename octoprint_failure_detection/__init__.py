@@ -25,13 +25,14 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
 
         if not self._settings.get(["enabled"]): 
             self._logger.info("Not opted-in")
+            return 
 
         self._logger.info("We are printing, attempting to check for failure")
         # Upload the screenshot 
         self.detect_failure()
 
     def get_check_interval(self):
-        return int(self._settings.get(["enabled"]))
+        return int(self._settings.get(["interval"]))
 
     def on_after_startup(self):
         self.printFileName = ""

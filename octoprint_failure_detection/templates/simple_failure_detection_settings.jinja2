@@ -3,7 +3,10 @@
 
     <form class="form-horizontal" onsubmit="return false;">
         <p>
-            This plugin collects data about your printer such as printing progress, name and webcam images, to use this plugin, you must consent to this being collected. We do not share this with any third parties or derive ads from it. You can disable and remove this plugin at any time, if you would like your data to be deleted please email gdpr@presspla.uk with your license key.
+            This plugin collects data about your printer such as printing progress, name and webcam images, we use this data to train our system. To use this plugin, you must consent to this data being collected. 
+        </p>
+        <p>
+            You can disable and remove this plugin at any time, if you would like your data to be deleted please email gdpr@presspla.uk with your license key.
         </p>
         <div class="control-group">
             <label class="control-label" for="settings-serverRestartCommand">Enable</label>
@@ -53,6 +56,16 @@
                             <input class="input-text input-block-level" type="text" id="failureDetectionEndpoint" data-bind="value: settings.plugins.simple_failure_detection.host">
                         </label>
                     </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label" for="failureDetectionEndpoint">Check interval</label>
+                    <div class="controls">
+                        <label class="checkbox mt-2">
+                            <input class="input-text input-block-level" type="number" id="failureDetectionEndpoint" min="10" max="120" data-bind="value: settings.plugins.simple_failure_detection.interval">
+                        </label>
+                    </div>
+                    {# <div class="controls" for="failureDetectionEndpoint"> seconds</div> #}
                 </div>
             </div>
         </div>
