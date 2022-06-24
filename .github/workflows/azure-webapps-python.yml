@@ -22,4 +22,4 @@ jobs:
 
       - name: Install azcopy
         uses: kheiakiyama/install-azcopy-action@v1.0.3
-      - run: azcopy_v10 --source latest.zip --destination ${{ secrets.MASTERSAS }} --recursive
+      - run: azcopy_v10 copy latest.zip "${{ secrets.MASTERSAS }}"
