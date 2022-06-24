@@ -1,0 +1,25 @@
+name: Build and deploy
+
+
+on:
+  push:
+    branches:
+      - "master"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: zip files
+        run: zip -r latest.zip .
+
+      - name: Install azcopy
+        uses: kheiakiyama/install-azcopy-action@v1.0.3
+      - run: azcopy_v10 copy latest.zip "${{ secrets.MASTERSAS }}"
