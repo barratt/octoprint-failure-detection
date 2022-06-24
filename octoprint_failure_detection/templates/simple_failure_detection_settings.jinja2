@@ -3,19 +3,22 @@
 
     <form class="form-horizontal" onsubmit="return false;">
         <p>
-            This plugin collects data about your printer such as printing progress, name and webcam images, we use this data to train our system. To use this plugin, you must consent to this data being collected. 
+            This plugin collects data about your printer such as printing progress, name and webcam images, we use this data to train our system. To use this plugin, you must consent to this data being collected. You can disable and remove this plugin at any time, if you would like your data to be deleted please email gdpr@presspla.uk with your license key.
         </p>
-        <p>
-            You can disable and remove this plugin at any time, if you would like your data to be deleted please email gdpr@presspla.uk with your license key.
-        </p>
+
         <div class="control-group">
-            <label class="control-label" for="failureDetectionLicenseKeyEnabled">Enable</label>
+            <label class="control-label" for="failureDetectionLicenseKeyEnabled">Enable Detection</label>
             <div class="controls">
                 <label class="checkbox mt-2">
                     <input type="checkbox" data-bind="checked: settings.plugins.simple_failure_detection.enabled" id="failureDetectionLicenseKeyEnabled"> 
                 </label>
             </div>
         </div>
+
+        <p>
+            The detection is done on our servers as high CPU usage on a RPi can cause GCode sending failures leading to failed prints.
+            Currently this plugin is completely free, as usage and thus server costs go up, this may change, but for now we have no plans to monetize.
+        </p>
 
         <div class="control-group" title="Command to restart the OctoPrint server">
              <label class="control-label" for="failureDetectionLicenseKey">License Key</label>
@@ -24,8 +27,24 @@
             </div>
         </div>
 
+        <div class="control-group">
+            <label class="control-label" for="failureDetectionLicenseKeynavbarEnabled">Navbar Status</label>
+            <div class="controls">
+                <label class="checkbox mt-2">
+                    <input type="checkbox" data-bind="checked: settings.plugins.simple_failure_detection.navbarEnabled" id="failureDetectionLicenseKeynavbarEnabled"> 
+                </label>
+            </div>
+        </div>
+
         <h5>Notiifcation Settings</h5>
         <p>If a print has been detected as failed, we can notify or stop the print.</p>
+
+        <div class="control-group" title="{{ _('Sensitivity of the system, we recommend normal but different environments may require a little tweaking')|edq }}">
+            <label class="control-label" for="failureDetectionSensitivity">{{ _('Sensitivity') }}</label>
+            <div class="controls">
+                <select id="failureDetectionSensitivity" data-bind="options: sensitivityOptions, optionsCaption: 'Recommended', value: sensitivity"></select>
+            </div>
+        </div>
 
         <div class="control-group" title="Command to restart the OctoPrint server">
              <label class="control-label" for="failureDetectionemail">Notificaion Email</label>
@@ -42,7 +61,8 @@
                 </label>
             </div>
         </div>
-
+        <h5>Activity</h5>
+        <p>TODO: Here you will be able to see everything the plugin is doing, when it detects a print when it sends an image when its sent an email etc for you to ensure its working correctly</p>
         <hr>
         <div>
             <div><small><a href="#" class="muted" data-bind="toggleContent: { class: 'fa-caret-right fa-caret-down', parent: '.form-horizontal', container: '.hide' }"><i class="fas fa-caret-down"></i> Advanced options</a></small></div>

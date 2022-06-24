@@ -15,6 +15,29 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
     octoprint.plugin.EventHandlerPlugin,
     octoprint.plugin.StartupPlugin
 ):
+    def get_settings_defaults(self):
+        return dict(
+            # put your plugin's default settings here
+            licenseKey = None,
+            printerId = None,
+            # host = "http://3ffa20353787.ngrok.io",
+            host = "https://func-octoprint-failure-detection.azurewebsites.net/api", # TODO: Move this to a custom domain... At some point...
+            # host = "http://host.docker.internal:7071/api",
+            # host = "http:/api.presspla.uk",
+            debug = False,
+            enabled = False,
+            interval = 30.0,
+            training = False,
+            email = None,
+            stopOnFailure = False,
+            navbarEnabled = True,
+            niceStatus = "Waiting",
+
+            notificationSettings = dict(
+                email   = None,
+                sms     = None,
+            )
+        )
 
     def loop(self):
         self._logger.info("Timer fired")
@@ -35,36 +58,18 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
         return int(self._settings.get(["interval"]))
 
     def on_after_startup(self):
-        self.printFileName = ""
-        self.printId = ""
-        self.availableCredits = 0
-
         self._logger.info("Hello World! (License Key: {})".format(self._settings.get(["licenseKey"])))
         self.timer = RepeatedTimer(self.get_check_interval, self.loop, run_first=True)
 
-    ##~~ SettingsPlugin mixin
-    def get_settings_defaults(self):
-        return dict(
-            # put your plugin's default settings here
-            licenseKey = None,
-            # host = "http://3ffa20353787.ngrok.io",
-            host = "https://func-octoprint-failure-detection.azurewebsites.net/api", # TODO: Move this to a custom domain... At some point...
-            # host = "http://host.docker.internal:7071/api",
-            # host = "http:/api.presspla.uk",
-            debug = False,
-            enabled = False,
-            interval = 30.0,
-            training = False,
-            email = None,
-            stopOnFailure = False,
+        # Create a unique way of identifying this install
+        printerId = self._settings.get(["printerId"])
+        if printerId is None:
+            printerId = str(uuid.uuid4())
+            self._settings.set(["printerId"], printerId)
+            self._settings.save()
 
-            notificationSettings = dict(
-                email   = None,
-                sms     = None,
-            )
-        )
+        self.printerId = printerId
 
-    ##~~ AssetPlugin mixin
     def get_assets(self):
         # Define your plugin's asset files to automatically include in the
         # core UI here.
@@ -73,21 +78,24 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
             "css": ["css/failure_detection.css"]
         }
 
-    ##~~ Softwareupdate hook
     def get_update_information(self):
         return {
             "failure_detection": {
                 "displayName": "Simple Failure Detection",
                 "displayVersion": self._plugin_version,
 
-                # version check: github repository
-                "type": "github_release",
-                "user": "Barratt",
-                "repo": "octoprint-failure-detection",
-                "current": self._plugin_version,
+                "type": "httpheader",
+                "header_url": "https://failuredetection.blob.core.windows.net/public/dist/latest.zip",
+                "header_name": "Last-Modified",
+                "header_method": "HEAD",
+
+                # "type": "github",
+                # "user": "Barratt",
+                # "repo": "octoprint-failure-detection",
+                # "current": self._plugin_version,
 
                 # update method: pip
-                "pip": "https://github.com/barratt/octoprint-failure-detection/archive/{target_version}.zip",
+                "pip": "https://failuredetection.blob.core.windows.net/public/dist/latest.zip",
             }
         }
 
@@ -99,11 +107,13 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
         # PrinterStateChanged
         if event == "PrintStarted":
             self._logger.info("PRINT STARTED")
+            self.niceStatus = "Watching"
             self.printId = str(uuid.uuid4())
             self.timer.start()
 
         if event == "PrintCancelled": 
             self._logger.info("HELLO CANCELLED!")
+            self.niceStatus = "Waiting"
             # Detect failure and stop the timer?
             if not self._settings.get(["enabled"]): 
                 self._logger.info("Not opted-in")
@@ -113,7 +123,6 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
             # Upload the screenshot 
             self.detect_failure()
 
-        #  PrintCancelled could be _really_ good for us.
     def detect_failure(self):
         try:
             snapshot_url = self._settings.global_get(["webcam", "snapshot"])
@@ -142,20 +151,22 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
             img = open(filepath, 'rb').read()
 
             self._logger.info('sending image')
-            # We need some kind of way of detecting this printer is unique for their license key, for now we will just rate limit
+            
             response = requests.post(endpoint, data=img, headers = {
                 'Authorization': licenseKey, 
+                'PrinterID': self.printerId,    # Using these we don't accidentally send the notification to the wrong printer.
+                'PrintID': self.printId,
                 'Content-Type': 'application/octet-stream'
             })
 
             self._logger.info('Sent! Got status %s and response: %s with headers: %s', response.status_code, response.text, response.headers)
-
-            # This can be triggered on cancell or on timer if we see a failure we might want to stop the print though if its running
-
             if licenseKey is None:
                 self._logger.info("Our license key was not set before, lets set it")
                 self._settings.set(["licenseKey"], response.headers.get("Authorization", licenseKey))
                 self._settings.save()
+
+            # This can be triggered on cancell or on timer if we see a failure we might want to stop the print though if its running
+            
 
             self._logger.info("Done")
             # os.remove(filename)
@@ -172,6 +183,7 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
     def on_settings_save(self, data):
         self._logger.info('Saving')
         # Validate settings
+        # If email / sms has changed let the server know the new details
 
         octoprint.plugin.SettingsPlugin.on_settings_save(self, data)
     
@@ -185,7 +197,10 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
             licenseKey = self._settings.get(["licenseKey"]),
             host = self._settings.get(["host"]),
             enabled = self._settings.get(["enabled"]),
+            navbarEnabled = self._settings.get(["navbarEnabled"]),
+            niceStatus = self._settings.get(["niceStatus"]),
         )
+
 # If you want your plugin to be registered within OctoPrint under a different name than what you defined in setup.py
 # ("OctoPrint-PluginSkeleton"), you may define that here. Same goes for the other metadata derived from setup.py that
 # can be overwritten via __plugin_xyz__ control properties. See the documentation for that.

@@ -1,18 +1,27 @@
 /*
  * View model for OctoPrint-Failure_detection
  *
- * Author: You
- * License: AGPLv3
+ * Author: Barratt
+ * License: MIT
  */
 $(function() {
     function Failure_detectionViewModel(parameters) {
         var self = this;
         self.settings = parameters[0];
-        console.log("Hello shaun");
-        // assign the injected parameters, e.g.:
-        // self.loginStateViewModel = parameters[0];
+        
+        self.status = ko.observable();
+        self.navbarEnabled = ko.observable();
+        self.sensitivityOptions = ko.observableArray(['Not Sensitive', 'Recommended', 'Very Sensitive']);
+        self.sensitivity = ko.observable();
 
-        // TODO: Implement your plugin's view model here.
+
+        self.onBeforeBinding = function() {
+            self.navbarEnabled(self.settings.settings.plugins.simple_failure_detection.navbarEnabled);
+            self.status(self.settings.settings.plugins.simple_failure_detection.niceStatus);
+            // self.goToUrl();
+        }
+
+        // Watch for status change somehow?
     }
 
     /* view model class, parameters for constructor, container to bind to
@@ -24,10 +33,12 @@ $(function() {
         // ViewModels your plugin depends on, e.g. loginStateViewModel, settingsViewModel, ...
         dependencies: [ 
             "settingsViewModel", 
+            "navigationViewModel"
             /* "loginStateViewModel" */
         ],
         elements: [ 
-            '#failure_detection_settings',
+            '#sfd_nav',
+            '#failure_detection_settings'
         ]
     });
 });
