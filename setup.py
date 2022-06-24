@@ -18,7 +18,9 @@ plugin_version = "0.1.1"
 
 # The plugin's description. Can be overwritten within OctoPrint's internal data via __plugin_description__ in the plugin
 # module
-plugin_description = """TODO"""
+plugin_description = """
+Completely free failure dection via webcam
+"""
 
 # The plugin's author. Can be overwritten within OctoPrint's internal data via __plugin_author__ in the plugin module
 plugin_author = "Barratt"

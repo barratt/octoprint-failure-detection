@@ -31,7 +31,6 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
             email = None,
             stopOnFailure = False,
             navbarEnabled = True,
-            niceStatus = "Waiting",
 
             notificationSettings = dict(
                 email   = None,
@@ -50,6 +49,9 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
             self._logger.info("Not opted-in")
             return 
 
+        self.niceStatus = "Watching"
+        self._plugin_manager.send_plugin_message(self._identifier, dict(type="var_update", name="status", value=self.niceStatus))
+
         self._logger.info("We are printing, attempting to check for failure")
         # Upload the screenshot 
         self.detect_failure()
@@ -66,16 +68,19 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
         if printerId is None:
             printerId = str(uuid.uuid4())
             self._settings.set(["printerId"], printerId)
+            print("saving printer settings")
             self._settings.save()
+            print("done")
 
         self.printerId = printerId
+        self.niceStatus = "Ready"
 
     def get_assets(self):
         # Define your plugin's asset files to automatically include in the
         # core UI here.
         return {
-            "js": ["js/failure_detection.js"],
-            "css": ["css/failure_detection.css"]
+            "js":   [ "js/failure_detection.js" ],
+            "css":  [ "css/failure_detection.css" ]
         }
 
     def get_update_information(self):
@@ -107,13 +112,11 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
         # PrinterStateChanged
         if event == "PrintStarted":
             self._logger.info("PRINT STARTED")
-            self.niceStatus = "Watching"
             self.printId = str(uuid.uuid4())
             self.timer.start()
 
         if event == "PrintCancelled": 
             self._logger.info("HELLO CANCELLED!")
-            self.niceStatus = "Waiting"
             # Detect failure and stop the timer?
             if not self._settings.get(["enabled"]): 
                 self._logger.info("Not opted-in")
@@ -122,7 +125,9 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
             self._logger.info("Print cancelled, this is usually due to failure so lets grab a screenshot")
             # Upload the screenshot 
             self.detect_failure()
-
+            self.niceStatus = "Ready"
+            self._plugin_manager.send_plugin_message(self._identifier, dict(type="var_update", name="status", value=self.niceStatus))
+            
     def detect_failure(self):
         try:
             snapshot_url = self._settings.global_get(["webcam", "snapshot"])
@@ -156,6 +161,8 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
                 'Authorization': licenseKey, 
                 'PrinterID': self.printerId,    # Using these we don't accidentally send the notification to the wrong printer.
                 'PrintID': self.printId,
+                # Print time and layer height could be interesting metrics to track
+                # If we're 4 hours into a print and nothings coming out the nozzle etc
                 'Content-Type': 'application/octet-stream'
             })
 
@@ -172,6 +179,9 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
             # os.remove(filename)
         except Exception as e:
             self._logger.warn("Could not detect: %s" % e)
+            self.niceStatus = 'Error'
+            self._plugin_manager.send_plugin_message(self._identifier, dict(type="var_update", name="status", value=self.niceStatus))
+
     
     def get_settings_restricted_paths(self):
             return dict(
@@ -189,7 +199,8 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
     
     def get_template_configs(self):
         return [
-			dict(type = "settings", custom_bindings = False)
+			dict(type = "settings", custom_bindings = True),
+			dict(type = "navbar", custom_bindings = True)
 		]
 
     def get_template_vars(self):
@@ -198,7 +209,6 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
             host = self._settings.get(["host"]),
             enabled = self._settings.get(["enabled"]),
             navbarEnabled = self._settings.get(["navbarEnabled"]),
-            niceStatus = self._settings.get(["niceStatus"]),
         )
 
 # If you want your plugin to be registered within OctoPrint under a different name than what you defined in setup.py

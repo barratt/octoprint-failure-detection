@@ -6,11 +6,12 @@
             This plugin collects data about your printer such as printing progress, name and webcam images, we use this data to train our system. To use this plugin, you must consent to this data being collected. You can disable and remove this plugin at any time, if you would like your data to be deleted please email gdpr@presspla.uk with your license key.
         </p>
 
+        <h5>Data Collcetion / Enable plugin</h5>
         <div class="control-group">
-            <label class="control-label" for="failureDetectionLicenseKeyEnabled">Enable Detection</label>
+            <label class="control-label" for="failureDetectionLicenseKeyEnabled">I allow data collection</label>
             <div class="controls">
                 <label class="checkbox mt-2">
-                    <input type="checkbox" data-bind="checked: settings.plugins.simple_failure_detection.enabled" id="failureDetectionLicenseKeyEnabled"> 
+                    <input type="checkbox" data-bind="checked: settings.settings.plugins.simple_failure_detection.enabled" id="failureDetectionLicenseKeyEnabled"> 
                 </label>
             </div>
         </div>
@@ -19,11 +20,11 @@
             The detection is done on our servers as high CPU usage on a RPi can cause GCode sending failures leading to failed prints.
             Currently this plugin is completely free, as usage and thus server costs go up, this may change, but for now we have no plans to monetize.
         </p>
-
+        <h5>General Settings</h5>
         <div class="control-group" title="Command to restart the OctoPrint server">
              <label class="control-label" for="failureDetectionLicenseKey">License Key</label>
             <div class="controls">
-                <input class="input-text input-block-level" type="text" id="failureDetectionLicenseKey" data-bind="value: settings.plugins.simple_failure_detection.licenseKey">
+                <input class="input-text input-block-level" type="text" id="failureDetectionLicenseKey" data-bind="value: settings.settings.plugins.simple_failure_detection.licenseKey">
             </div>
         </div>
 
@@ -31,7 +32,7 @@
             <label class="control-label" for="failureDetectionLicenseKeynavbarEnabled">Navbar Status</label>
             <div class="controls">
                 <label class="checkbox mt-2">
-                    <input type="checkbox" data-bind="checked: settings.plugins.simple_failure_detection.navbarEnabled" id="failureDetectionLicenseKeynavbarEnabled"> 
+                    <input type="checkbox" data-bind="checked: settings.settings.plugins.simple_failure_detection.navbarEnabled" id="failureDetectionLicenseKeynavbarEnabled"> 
                 </label>
             </div>
         </div>
@@ -42,6 +43,7 @@
         <div class="control-group" title="{{ _('Sensitivity of the system, we recommend normal but different environments may require a little tweaking')|edq }}">
             <label class="control-label" for="failureDetectionSensitivity">{{ _('Sensitivity') }}</label>
             <div class="controls">
+            
                 <select id="failureDetectionSensitivity" data-bind="options: sensitivityOptions, optionsCaption: 'Recommended', value: sensitivity"></select>
             </div>
         </div>
@@ -49,7 +51,7 @@
         <div class="control-group" title="Command to restart the OctoPrint server">
              <label class="control-label" for="failureDetectionemail">Notificaion Email</label>
             <div class="controls">
-                <input class="input-text input-block-level" type="text" id="failureDetectionemail" data-bind="value: settings.plugins.simple_failure_detection.email">
+                <input class="input-text input-block-level" type="text" id="failureDetectionemail" data-bind="value: settings.settings.plugins.simple_failure_detection.email">
             </div>
         </div>
 
@@ -57,7 +59,7 @@
             <label class="control-label" for="failureDetectionStopPrint">Stop the print</label>
             <div class="controls">
                 <label class="checkbox mt-2">
-                    <input type="checkbox" data-bind="checked: settings.plugins.simple_failure_detection.stopOnFailure" id="failureDetectionStopPrint"> 
+                    <input type="checkbox" data-bind="checked: settings.settings.plugins.simple_failure_detection.stopOnFailure" id="failureDetectionStopPrint"> 
                 </label>
             </div>
         </div>
@@ -71,18 +73,18 @@
                     Please only edit these settings if you know what you're doing!
                 </p>
                 <div class="control-group">
-                    <label class="control-label" for="settings-serverRestartCommand">Debug</label>
+                    <label class="control-label" for="sfdDebug">Debug</label>
                     <div class="controls">
                         <label class="checkbox mt-2">
-                            <input type="checkbox" data-bind="checked: settings.plugins.simple_failure_detection.debug" id="failureDetectionLicenseKeyDebug"> 
+                            <input type="checkbox" data-bind="checked: settings.settings.plugins.simple_failure_detection.debug" id="sdfDebug"> 
                         </label>
                     </div>
                 </div>
                 <div class="control-group">
-                    <label class="control-label" for="settings-serverRestartCommand">Training mode</label>
+                    <label class="control-label" for="sfdTrainingMode">Training mode</label>
                     <div class="controls">
                         <label class="checkbox mt-2">
-                            <input type="checkbox" data-bind="checked: settings.plugins.simple_failure_detection.training" id="failureDetectionLicenseKeytraining"> 
+                            <input type="checkbox" data-bind="checked: settings.settings.plugins.simple_failure_detection.training" id="sfdTrainingMode"> 
                         </label>
                     </div>
                 </div>
@@ -91,7 +93,7 @@
                     <label class="control-label" for="failureDetectionEndpoint">Host Endpoint</label>
                     <div class="controls">
                         <label class="checkbox mt-2">
-                            <input class="input-text input-block-level" type="text" id="failureDetectionEndpoint" data-bind="value: settings.plugins.simple_failure_detection.host">
+                            <input class="input-text input-block-level" type="text" id="failureDetectionEndpoint" data-bind="value: settings.settings.plugins.simple_failure_detection.host">
                         </label>
                     </div>
                 </div>
@@ -100,7 +102,7 @@
                     <label class="control-label" for="failureDetectionEndpoint">Check interval</label>
                     <div class="controls">
                         <label class="checkbox mt-2">
-                            <input class="input-text input-block-level" type="number" id="failureDetectionEndpoint" min="10" max="120" data-bind="value: settings.plugins.simple_failure_detection.interval">
+                            <input class="input-text input-block-level" type="number" id="failureDetectionEndpoint" min="10" max="120" data-bind="value: settings.settings.plugins.simple_failure_detection.interval">
                         </label>
                     </div>
                     {# <div class="controls" for="failureDetectionEndpoint"> seconds</div> #}
