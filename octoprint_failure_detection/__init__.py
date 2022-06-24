@@ -89,7 +89,7 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
         return {
             "failure_detection": {
                 "displayName": "Simple Failure Detection",
-                "displayVersion": self._plugin_version,
+                # "displayVersion": self._plugin_version,
 
                 "type": "httpheader",
                 "header_url": "https://failuredetection.blob.core.windows.net/public/dist/latest.zip",
