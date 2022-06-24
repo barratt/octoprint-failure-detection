@@ -32,6 +32,8 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
             stopOnFailure = False,
             navbarEnabled = True,
 
+            stopGCode="M112",
+
             notificationSettings = dict(
                 email   = None,
                 sms     = None,
@@ -159,10 +161,17 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
             
             response = requests.post(endpoint, data=img, headers = {
                 'Authorization': licenseKey, 
-                'PrinterID': self.printerId,    # Using these we don't accidentally send the notification to the wrong printer.
+                'PrinterID': self._settings.get(["printerId"]),    # Using these we don't accidentally send the notification to the wrong printer.
                 'PrintID': self.printId,
+
+                # TODO: Wrap these up in another endpoint to save the settings rather than sending every time
+                'sms': self._settings.get(["notificationSettings", "sms"]),
+                'email': self._settings.get(["notificationSettings", "email"]),
+                'sensitivity': self._settings.get(["sensitivity"]),
+
                 # Print time and layer height could be interesting metrics to track
                 # If we're 4 hours into a print and nothings coming out the nozzle etc
+
                 'Content-Type': 'application/octet-stream'
             })
 
@@ -171,6 +180,19 @@ class Failure_detectionPlugin(octoprint.plugin.SettingsPlugin,
                 self._logger.info("Our license key was not set before, lets set it")
                 self._settings.set(["licenseKey"], response.headers.get("Authorization", licenseKey))
                 self._settings.save()
+
+
+            body = response.json()
+            if body.failure:
+                # We detected a failure
+                self._logger.info('Failure detected')
+                self.niceStatus = 'Failure Detected!'
+                self._plugin_manager.send_plugin_message(self._identifier, dict(type="var_update", name="status", value=self.niceStatus))
+                shouldStop = self._settings.get(["stopOnFailure"])
+                if shouldStop: 
+                    gcode_list = str(self.stopGCode).split(':')
+                    for gcode in gcode_list:
+                        self._printer.commands(gcode)
 
             # This can be triggered on cancell or on timer if we see a failure we might want to stop the print though if its running
             

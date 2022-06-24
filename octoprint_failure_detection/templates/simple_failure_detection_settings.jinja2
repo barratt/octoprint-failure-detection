@@ -51,7 +51,14 @@
         <div class="control-group" title="Command to restart the OctoPrint server">
              <label class="control-label" for="failureDetectionemail">Notificaion Email</label>
             <div class="controls">
-                <input class="input-text input-block-level" type="text" id="failureDetectionemail" data-bind="value: settings.settings.plugins.simple_failure_detection.email">
+                <input class="input-text input-block-level" type="text" id="failureDetectionemail" data-bind="value: settings.settings.plugins.simple_failure_detection.notificationSettings.email">
+            </div>
+        </div>
+
+        <div class="control-group" title="Command to restart the OctoPrint server">
+             <label class="control-label" for="failureDetectionsms">Notificaion SMS</label>
+            <div class="controls">
+                <input class="input-text input-block-level" type="text" id="failureDetectionsms" data-bind="value: settings.settings.plugins.simple_failure_detection.notificationSettings.sms">
             </div>
         </div>
 
@@ -63,6 +70,7 @@
                 </label>
             </div>
         </div>
+        
         <h5>Activity</h5>
         <p>TODO: Here you will be able to see everything the plugin is doing, when it detects a print when it sends an image when its sent an email etc for you to ensure its working correctly</p>
         <hr>
@@ -106,6 +114,13 @@
                         </label>
                     </div>
                     {# <div class="controls" for="failureDetectionEndpoint"> seconds</div> #}
+                </div>
+
+                <div class="control-group" title="Command to restart the OctoPrint server">
+                    <label class="control-label" for="failureDetectionGCode">Stop GCode</label>
+                    <div class="controls">
+                        <input class="input-text input-block-level" type="text" id="failureDetectionGCode" data-bind="value: settings.settings.plugins.simple_failure_detection.stopGCode">
+                    </div>
                 </div>
             </div>
         </div>
